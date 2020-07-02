@@ -1,0 +1,7 @@
+---
+VAR_Zabbix_Agent_extracting_rolename:
+  - Zabbix40-Agent_install
+  - Zabbix40-Agent_setup
+  - Zabbix40-Agent_regist
+VAR_Zabbix_Agent_gathering_dest: "{{ playbook_dir }}/_gathered_data"
+VAR_Zabbix_Agent_extracting_dest: "{{ playbook_dir }}/_parameters"

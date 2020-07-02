@@ -1,0 +1,55 @@
+---
+- name: check param VAR_Zabbix_Agent_extracting_rolename subElement
+  stat:
+    path: "{{ VAR_Zabbix_Agent_gathering_dest }}/{{ inventory_hostname }}/Zabbix40_Agent_gathering_linux"
+  delegate_to: localhost
+  become: no
+  register: file_exist
+
+- name: parameter_generate run
+  block:
+  # 1-01  Zabbix_Agent Install Roleのパラメータ生成
+    - name: Execute the parameter_generate module for Zabbix40-Agent_install
+      parameter_generate:
+        rolename: "{{ outer_item }}"
+        collect_root: "{{ VAR_Zabbix_Agent_gathering_dest }}/{{ inventory_hostname }}/Zabbix40_Agent_gathering_linux"
+        # config: "{{ mapping_definition }}"
+        dest: "{{ VAR_Zabbix_Agent_extracting_dest }}"
+        specific: "python {{ role_path }}/files/Zabbix40-Agent_install.py"
+      when: outer_item == "Zabbix40-Agent_install"
+
+  # 1-02　Zabbix_Agent設定Roleのパラメータ生成
+    - name: Execute the parameter_generate module for Zabbix40-Agent_setup
+      parameter_generate:
+        rolename: "{{ outer_item }}"
+        collect_root: "{{ VAR_Zabbix_Agent_gathering_dest }}/{{ inventory_hostname }}/Zabbix40_Agent_gathering_linux"
+        config: "{{ mapping_definition }}"
+        dest: "{{ VAR_Zabbix_Agent_extracting_dest }}"
+        specific: "python {{ role_path }}/files/Zabbix40-Agent_setup.py"
+      vars:
+        mapping_definition:
+          - src: /command/1/stdout.txt
+            type: text
+            params:
+              - variable: "VAR_Zabbix40AG_RotateTiming"
+                value_type: "str"
+                regexp: "\\s*(daily|weekly|monthly|yearly)"
+          - src: /command/1/stdout.txt
+            type: text
+            params:
+              - variable: "VAR_Zabbix40AG_RotateCount"
+                value_type: "str"
+                regexp: "\\s*rotate\\s+(.*)"
+      when: outer_item == "Zabbix40-Agent_setup"
+
+  # 1-03　Zabbix_Agent登録Roleのパラメータ生成
+    - name: Execute the parameter_generate module for Zabbix40-Agent_regist
+      parameter_generate:
+        rolename: "{{ outer_item }}"
+        collect_root: "{{ VAR_Zabbix_Agent_gathering_dest }}/{{ inventory_hostname }}/Zabbix40_Agent_gathering_linux"
+        # config: "{{ mapping_definition }}"
+        dest: "{{ VAR_Zabbix_Agent_extracting_dest }}"
+        specific: "python {{ role_path }}/files/Zabbix40-Agent_regist.py"
+      when: outer_item == "Zabbix40-Agent_regist"
+
+  when: file_exist.stat.exists != false
